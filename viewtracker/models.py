@@ -1,14 +1,15 @@
 from django.db import models
-from django.auth.models import User
+from django.contrib.auth.models import User
 from datetime import datetime
+from django.core.exceptions import ObjectDoesNotExist
 
 class AllViewTracker(models.Model):
 	user = models.ForeignKey(User, unique=True)
 	last_view = models.DateTimeField(auto_now_add=True)
 	
-	def save():
-		last_view = datetime.now()
-		super(AllViewTracker, self).save()
+	def save(self, *args, **kwargs):
+		self.last_view = datetime.now()
+		super(AllViewTracker, self).save(*args, **kwargs)
 		
 		# delete all ModelViewTracker and InstanceViewTracker instances that are
 		# for this user
@@ -21,9 +22,9 @@ class ModelViewTracker(models.Model):
 	model = models.CharField(max_length=256)
 	last_view = models.DateTimeField(auto_now_add=True)
 	
-	def save():
-		last_view = datetime.now()
-		super(ModelViewTracker, self).save()
+	def save(self, *args, **kwargs):
+		self.last_view = datetime.now()
+		super(ModelViewTracker, self).save(*args, **kwargs)
 		
 		# delete all InstanceViewTracker instances that are for this user
 		InstanceViewTracker.objects.filter(user=self.user, model=self.model).delete()
@@ -32,36 +33,52 @@ class InstanceViewTracker(models.Model):
 	user = models.ForeignKey(User)
 	model = models.CharField(max_length=256)
 	model_pk = models.IntegerField()
+	last_view = models.DateTimeField(auto_now_add=True)
 	
-	def save():
-		last_view = datetime.now()
-		super(InstanceViewTracker, self).save()
+	def save(self, *args, **kwargs):
+		self.last_view = datetime.now()
+		super(InstanceViewTracker, self).save(*args, **kwargs)
+
+MODIFICATION_FIELD_NAMES = (
+	'last_modified',
+	'last_updated',
+	'modified',
+	'updated',
+	'changed',
+	'created'
+)
 
 class ViewTracker(object):
 	def __init__(self, user):
 		if user == None or user.is_anonymous():
 			# anonymous user.  make everything return being read, and disable tracking.
-			self.mark_instance_read = self.mark_model_read = self.mark_all_read = self.has_read = (lambda *args, **kwargs: True)
+			self.mark_instance_viewed = self.mark_model_viewed = self.mark_all_viewed = self.has_viewed = (lambda *args, **kwargs: True)
 		else:
 			self.user = user
 	
-	def mark_instance_read(self, instance):
-		"Marks the instance of the model as read."
-		vt = models.InstanceViewTracker.objects.get_or_create(user=self.user, model=instance._meta.db_table, model_pk=instance.pk)
-		vt.save()
+	def mark_instance_viewed(self, instance):
+		"Marks the instance of the model as having being viewed."
+		vt = InstanceViewTracker.objects.get_or_create(user=self.user, model=instance._meta.db_table, model_pk=instance.pk)
+		vt[0].save()
 	
-	def mark_model_read(self, model):
-		"Marks all instances of the model as read."
-		vt = models.ModelViewTracker.objects.get_or_create(user=self.user, model=instance._meta.db_table)
-		vt.save()
+	def mark_model_viewed(self, model):
+		"Marks all instances of the model as having being viewed.  `model` may be an instance of the Model, the Model class, or a name of a table in a unicode or regular str."
+		if isinstance(model, str) or isinstance(model, unicode):
+			# table name was specified
+			tablename = model
+		else: # it's a model, or an instance of one.
+			tablename = model._meta.db_table
 		
-	def mark_all_read(self):
-		"Mark all items as read."
-		vt = models.AllViewTracker(user=self.user)
-		vt.save()
+		vt = ModelViewTracker.objects.get_or_create(user=self.user, model=tablename)
+		vt[0].save()
 		
-	def has_read(self, instance, last_update=None, updated_field='last_modified'):
-		"""Determine if an instance of a model has been read.  Takes parameters:
+	def mark_all_viewed(self):
+		"Mark all items as viewed."
+		vt = AllViewTracker.objects.get_or_create(user=self.user)
+		vt[0].save()
+		
+	def has_viewed(self, instance, last_update=None, updated_field=None):
+		"""Determine if an instance of a model has been viewed.  Takes parameters:
 		
 			instance: The instance of the model that is being looked up.
 			
@@ -72,6 +89,16 @@ class ViewTracker(object):
 			updated_field: The name of the field on the object that stores when it was last updated.  If it is callable, it will be called instead.
 		"""
 		if last_update == None:
+			# no updated field name was given.  try to guess
+			if updated_field == None:
+				for x in MODIFICATION_FIELD_NAMES:
+					try:
+						return self.has_viewed(instance, updated_field=x)
+					except:
+						pass
+				
+				raise Exception("You must supply either last_update or updated_field parameter to is_instance_read. I tried to guess, and failed.")
+						
 			# update time not supplied, try to look it up
 			if hasattr(instance, updated_field):
 				last_update = getattr(instance, updated_field)
@@ -79,7 +106,7 @@ class ViewTracker(object):
 					last_update = last_update()
 			else:
 				# fail
-				raise Exception("You must supply either last_update or updated_field parameter to is_instance_read.  You supplied neither, and no field %s was found on the instance." % updated_field)
+				raise Exception("You must supply either last_update or updated_field parameter to is_instance_read.  No field %s was found on the instance." % updated_field)
 		
 		# test to see if it is a datetime
 		if not isinstance(last_update, datetime):
@@ -91,7 +118,7 @@ class ViewTracker(object):
 			AllViewTracker.objects.get(user=self.user, last_view__gte=last_update)
 			# success, there was a matching object.  this means the object has been read.
 			return True
-		except:
+		except ObjectDoesNotExist:
 			pass
 			
 		# Hasn't been read since the last "AllViewTracker" instance for the user.
@@ -101,7 +128,7 @@ class ViewTracker(object):
 		try:
 			ModelViewTracker.objects.get(user=self.user, model=instance._meta.db_table, last_view__gte=last_update)
 			return True
-		except:
+		except ObjectDoesNotExist:
 			pass
 			
 		# Hasn't been read since the last "ModelViewTracker" instance for the user
@@ -110,9 +137,9 @@ class ViewTracker(object):
 		# Stage 3: see if it was updated since the last InstanceViewTracker for the
 		# user and instance.
 		try:
-			InstanceViewTracker.objects.get(user=self.user, model=instance._meta.db_table, last_view__gte=last_update)
+			InstanceViewTracker.objects.get(user=self.user, model=instance._meta.db_table, model_pk=instance.pk, last_view__gte=last_update)
 			return True
-		except:
+		except ObjectDoesNotExist:
 			# unread
 			return False
 			
