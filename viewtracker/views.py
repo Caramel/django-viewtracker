@@ -1,5 +1,5 @@
 from models import ViewTracker
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseNotAllowed
 
 def mark_all_as_viewed(request, fallback_redirect_to='/'):
 	"""Marks all objects as viewed for ViewTracker.  POST to this view and all objects will be marked as viewed.
@@ -8,7 +8,7 @@ def mark_all_as_viewed(request, fallback_redirect_to='/'):
 	"""
 	
 	if request.method != 'POST':
-		raise Exception("You must POST to this view.")
+		return HttpResponseNotAllowed(['POST'])
 		
 	tracking = ViewTracker(request.user)
 	tracking.mark_all_viewed()
@@ -28,8 +28,8 @@ def mark_model_as_viewed(request, model, fallback_redirect_to='/'):
 	"""
 	
 	if request.method != 'POST':
-		raise Exception("You must POST to this view.")
-		
+		return HttpResponseNotAllowed(['POST'])
+				
 	tracking = ViewTracker(request.user)
 	tracking.mark_model_viewed(model)
 	
