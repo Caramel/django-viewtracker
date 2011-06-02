@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='django-viewtracker',
-    version='1.0',
+    version='1.1',
     description='Object view tracker for Django',
     author='Michael Farrell',
     author_email='michael+dvt@uanywhere.com.au',

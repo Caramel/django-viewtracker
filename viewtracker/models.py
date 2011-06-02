@@ -56,6 +56,22 @@ class ViewTracker(object):
 		else:
 			self.user = user
 	
+	def last_activity(self):
+		"Finds the datetime that the user last accessed anything that is ViewTracker enabled.  Returns None if there is no information about views by the user."
+		
+		last_view = None
+		for x in (AllViewTracker, ModelViewTracker, InstanceViewTracker):
+			try:
+				if last_view == None:
+					last_view = x.objects.filter(user=self.user).order_by('-last_view').values_list('last_view', flat=True)[0]
+				else:
+					last_view = x.objects.filter(user=self.user, last_view__gt=last_view).order_by('-last_view').values_list('last_view', flat=True)[0]
+			except ObjectDoesNotExist:
+				pass
+			except IndexError:
+				pass
+		return last_view
+	
 	def mark_instance_viewed(self, instance):
 		"Marks the instance of the model as having being viewed."
 		vt = InstanceViewTracker.objects.get_or_create(user=self.user, model=instance._meta.db_table, model_pk=instance.pk)
