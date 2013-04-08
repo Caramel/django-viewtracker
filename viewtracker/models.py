@@ -18,6 +18,9 @@ class AllViewTracker(models.Model):
 		
 
 class ModelViewTracker(models.Model):
+	class Meta:
+		unique_together = ('user', 'model')
+	
 	user = models.ForeignKey(User)
 	model = models.CharField(max_length=256)
 	last_view = models.DateTimeField(auto_now_add=True)
@@ -30,6 +33,9 @@ class ModelViewTracker(models.Model):
 		InstanceViewTracker.objects.filter(user=self.user, model=self.model).delete()
 
 class InstanceViewTracker(models.Model):
+	class Meta:
+		unique_together = ('user', 'model', 'model_pk')
+	
 	user = models.ForeignKey(User)
 	model = models.CharField(max_length=256)
 	model_pk = models.IntegerField()
