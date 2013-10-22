@@ -3,20 +3,22 @@
 from distutils.core import setup
 
 setup(
-    name='django-viewtracker',
-    version='1.1',
-    description='Object view tracker for Django',
-    author='Michael Farrell',
-    author_email='michael+dvt@uanywhere.com.au',
-    url='http://uanywhere.com.au/',
-    packages=[
-        'viewtracker',
-    ],
-    classifiers=[
-                 'Environment :: Web Environment',
-                 'Framework :: Django',
-                 'Intended Audience :: Developers',
-                 'Operating System :: OS Independent',
-                 'Programming Language :: Python',
-                 'Topic :: Utilities'],
+	name='django-viewtracker',
+	version='1.2',
+	description='Object view tracker for Django',
+	author='Caramel',
+	author_email='support@caramel.com.au',
+	url='http://www.caramel.com.au/',
+	packages=[
+		'viewtracker',
+	],
+	classifiers=[
+		'Environment :: Web Environment',
+		'Framework :: Django',
+		'Intended Audience :: Developers',
+		'Operating System :: OS Independent',
+		'Programming Language :: Python',
+		'Topic :: Utilities'
+	],
 )
+
