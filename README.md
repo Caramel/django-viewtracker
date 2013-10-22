@@ -1,5 +1,7 @@
 # django-viewtracker #
 
+Copyright 2010 - 2013 [Caramel](http://www.caramel.com.au/) (formerly uAnywhere).  Released under the 3-clause BSD license.
+
 `django-viewtracker` is a simple Django application to allow you to do view tracking on objects.  The primary purpose of the module is so that a user can determine what objects they have already seen.
 
 It contains some additional "smarts" for dealing with updates as well - so if you haven't read it since an update, then you haven't read it at all.
@@ -111,5 +113,8 @@ Then call it in your template with something like:
 	<input type="submit" value="Mark all cars as viewed" />
 </form>
 ```
+
+Note that by default all objects will be "unviewed", so when you first roll the application out, you may wish to set everyone as having viewed all objects up to a particular point in time.
+
 
 

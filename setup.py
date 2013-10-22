@@ -12,6 +12,7 @@ setup(
 	packages=[
 		'viewtracker',
 	],
+	license='BSD',
 	classifiers=[
 		'Environment :: Web Environment',
 		'Framework :: Django',

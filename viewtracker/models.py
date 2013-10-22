@@ -1,3 +1,11 @@
+"""
+viewtracker/models.py - Data models for managing view tracking in Django
+Copyright 2010-2013 Caramel.
+
+This software is licensed under the terms of the 3-clause BSD license.  See
+COPYING for details.
+
+"""
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime

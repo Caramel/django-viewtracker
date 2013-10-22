@@ -1,3 +1,12 @@
+"""
+viewtracker/views.py - Views for managing view tracking in Django
+Copyright 2010-2013 Caramel.
+
+This software is licensed under the terms of the 3-clause BSD license.  See
+COPYING for details.
+
+"""
+
 from models import ViewTracker
 from django.http import HttpResponseRedirect, HttpResponseNotAllowed
 
