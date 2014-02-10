@@ -8,7 +8,7 @@ setup(
 	description='Object view tracker for Django',
 	author='Caramel',
 	author_email='support@caramel.com.au',
-	url='http://www.caramel.com.au/',
+	url='https://github.com/Caramel/django-viewtracker',
 	packages=[
 		'viewtracker',
 	],
